@@ -26,18 +26,15 @@ proc print data = R_pkg; run;
 proc python;
 submit;
  
-import pkg_resources
+import importlib.metadata
 import pandas as pd
 import sys
 
-# Get the list of installed packages
-installed_packages = pkg_resources.working_set
+package_list = [(dist.metadata["Name"], dist.metadata["Version"]) for dist in importlib.metadata.distributions()]
 
-# Create a list of tuples with package names and versions
-package_list = [(package.project_name, package.version) for package in installed_packages]
+df = pd.DataFrame(package_list)
+df.columns = ["Package","Version"]
 
-# Convert the list of tuples into a DataFrame
-df = pd.DataFrame(package_list, columns=['Package', 'Version'])
 
 ds = SAS.df2sd(df.sort_values(by='Package'), 'work.PythonPackages')
 
@@ -46,6 +43,7 @@ SAS.symput('PythonVer',pver)
 
 endsubmit;
 run;
+
 
 TITLE "Python Version: &PythonVer";
 PROC SQL;
